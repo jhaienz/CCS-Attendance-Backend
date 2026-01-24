@@ -11,10 +11,10 @@ export class Attendance {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Event' })
   eventId: string;
 
-  @Prop({ required: true })
+  @Prop()
   AM: boolean;
 
-  @Prop({ required: true })
+  @Prop()
   PM: boolean;
 }
 
