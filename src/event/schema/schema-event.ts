@@ -4,7 +4,7 @@ import { HydratedDocument } from 'mongoose';
 export type EventDocument = HydratedDocument<Event>;
 
 @Schema({ timestamps: true })
-export class Student {
+export class Event {
   @Prop({ required: true })
   eventTitle: string;
 
