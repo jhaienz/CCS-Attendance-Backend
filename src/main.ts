@@ -28,7 +28,8 @@ async function bootstrap() {
       ? app.use(morgan('dev'))
       : app.use(morgan('common'));
 
-    await app.listen((process.env.PORT as string) || 3000);
+    const port = process.env.PORT || 3000;
+    await app.listen(port, '0.0.0.0');
     console.log(`Server is running on port ${process.env.PORT}`);
   } catch (error) {
     console.error('Error starting the server:', error);
