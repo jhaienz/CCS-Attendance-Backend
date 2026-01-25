@@ -6,7 +6,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-  app.use(morgan('dev'));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
