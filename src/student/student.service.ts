@@ -11,26 +11,22 @@ export class StudentService {
   ) {}
 
   async createStudent(data: CreateStudentDto) {
-    try {
-      const { firstName, lastName, CSY, studentId, gbox } = data;
+    const { firstName, lastName, CSY, studentId, gbox } = data;
 
-      const studentExists = await this.studentModel.findOne({ studentId });
+    const studentExists = await this.studentModel.findOne({ studentId });
 
-      if (studentExists) {
-        throw new BadRequestException('Student Already Exists');
-      }
-
-      const student = await this.studentModel.create({
-        firstName,
-        lastName,
-        CSY,
-        studentId,
-        gbox,
-      });
-
-      return { success: true, student };
-    } catch (error) {
-      throw new Error(error);
+    if (studentExists) {
+      throw new BadRequestException('Student Already Exists');
     }
+
+    const student = await this.studentModel.create({
+      firstName,
+      lastName,
+      CSY,
+      studentId,
+      gbox,
+    });
+
+    return { success: true, student };
   }
 }
