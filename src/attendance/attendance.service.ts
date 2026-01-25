@@ -1,8 +1,6 @@
 import {
   Injectable,
-  BadRequestException,
   InternalServerErrorException,
-  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -22,88 +20,77 @@ export class AttendanceService {
   ) {}
 
   async postAttendance(data: any, eventId: string) {
-    try {
-      const { firstName, lastName, CSY, studentId, gbox, AM, PM } = data;
+    const { firstName, lastName, CSY, studentId, gbox, AM, PM } = data;
 
-      // 1. Find the student and the event
-      let student = await this.studentModel.findOne({ studentId }).exec();
+    // 1. Find the student and the event
+    let student = await this.studentModel.findOne({ studentId }).exec();
 
-      // Fix: findById takes the string directly
-      const event = await this.eventModel.findById(eventId).exec();
+    // Fix: findById takes the string directly
+    const event = await this.eventModel.findById(eventId).exec();
 
-      // Safety check: Does the event actually exist?
-      if (!event) {
-        throw new NotFoundException(`Event with ID ${eventId} not found`);
-      }
+    // Safety check: Does the event actually exist?
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
 
-      // 2. Creation logic for NEW students
-      if (!student) {
-        const result = await this.studentService.createStudent({
-          firstName,
-          lastName,
-          CSY,
-          studentId,
-          gbox,
-        });
-        student = result.student;
-      }
-
-      const checkAttendance = await this.attendanceModel.findOne({
-        student: student._id as any,
-        event: event._id as any,
+    // 2. Creation logic for NEW students
+    if (!student) {
+      const result = await this.studentService.createStudent({
+        firstName,
+        lastName,
+        CSY,
+        studentId,
+        gbox,
       });
+      student = result.student;
+    }
 
-      if (checkAttendance) {
-        return this.patchAttendance(checkAttendance._id.toString(), { AM, PM });
-      }
+    // check if attendance already exists
+    const checkAttendance = await this.attendanceModel.findOne({
+      student: student._id as any,
+      event: event._id as any,
+    });
 
-      // 3. Final Safety Check
-      if (!student) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve or create student',
-        );
-      }
+    // updates existing attendance
+    if (checkAttendance) {
+      return this.patchAttendance(checkAttendance._id.toString(), { AM, PM });
+    }
 
-      // 4. Create attendance
-      await this.attendanceModel.create({
-        student: student._id as any,
-        event: event._id as any, // This now correctly points to the Event document
-        AM: AM || false,
-        PM: PM || false,
-      });
-
-      return { message: 'Success' };
-    } catch (error) {
-      console.error(error);
-      // Use the error message if available, otherwise a generic one
+    // 3. Final Safety Check
+    if (!student) {
       throw new InternalServerErrorException(
-        error.message || 'Error posting attendance',
+        'Failed to retrieve or create student',
       );
     }
+
+    // 4. Create attendance
+    await this.attendanceModel.create({
+      student: student._id as any,
+      event: event._id as any, // This now correctly points to the Event document
+      AM: AM || false,
+      PM: PM || false,
+    });
+
+    return { message: 'Success' };
   }
 
   async patchAttendance(
     attendanceId: string,
     updateData: { AM?: boolean; PM?: boolean },
   ) {
-    try {
-      // Construct the update object dynamically
-      const update: any = {};
-      if (updateData.AM !== undefined) update.AM = updateData.AM;
-      if (updateData.PM !== undefined) update.PM = updateData.PM;
+    const update: any = {};
+    if (updateData.AM !== undefined) update.AM = updateData.AM;
+    if (updateData.PM !== undefined) update.PM = updateData.PM;
 
-      const updatedRecord = await this.attendanceModel.findByIdAndUpdate(
-        attendanceId,
-        { $set: update },
-        { new: true }, // returns the updated document
-      );
+    const updatedRecord = await this.attendanceModel.findByIdAndUpdate(
+      attendanceId,
+      { $set: update },
+      { new: true }, // returns the updated document
+    );
 
-      return {
-        message: 'Attendance updated (Success)',
-        data: updatedRecord,
-      };
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to update attendance');
-    }
+    return {
+      message: 'Attendance updated (Success)',
+      data: updatedRecord,
+    };
   }
 }
