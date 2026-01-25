@@ -29,17 +29,17 @@ export class EventController {
   }
 
   @Get(':id')
-  async getSingleEvent(@Param('id') id: number) {
+  async getSingleEvent(@Param('id') id: string) {
     return this.eventService.getEvent(id);
   }
 
   @Patch(':id')
-  async patchEvent(@Body() data: CreateEventDto, @Param('id') id: number) {
+  async patchEvent(@Body() data: CreateEventDto, @Param('id') id: string) {
     return this.eventService.updateEvent(data, id);
   }
 
   @Delete(':id')
-  async deleteEvent(@Param('id') id: number) {
+  async deleteEvent(@Param('id') id: string) {
     return this.eventService.deleteEvent(id);
   }
 }
