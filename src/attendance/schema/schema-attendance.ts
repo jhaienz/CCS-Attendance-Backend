@@ -18,6 +18,12 @@ export class Attendance {
 
   @Prop()
   PM: boolean;
+
+  @Prop()
+  AMOut: boolean;
+
+  @Prop()
+  PMOut: boolean;
 }
 
 export const AttendanceSchema = SchemaFactory.createForClass(Attendance);

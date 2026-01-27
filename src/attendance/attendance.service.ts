@@ -20,7 +20,8 @@ export class AttendanceService {
   ) {}
 
   async postAttendance(data: any, eventId: string) {
-    const { firstName, lastName, CSY, studentId, gbox, AM, PM } = data;
+    const { firstName, lastName, CSY, studentId, gbox, AM, PM, AMOut, PMOut } =
+      data;
 
     // 1. Find the student and the event
     let student = await this.studentModel.findOne({ studentId }).exec();
@@ -53,7 +54,12 @@ export class AttendanceService {
 
     // updates existing attendance
     if (checkAttendance) {
-      return this.patchAttendance(checkAttendance._id.toString(), { AM, PM });
+      return this.patchAttendance(checkAttendance._id.toString(), {
+        AM,
+        PM,
+        AMOut,
+        PMOut,
+      });
     }
 
     // 3. Final Safety Check
@@ -69,6 +75,8 @@ export class AttendanceService {
       event: event._id as any, // This now correctly points to the Event document
       AM: AM || false,
       PM: PM || false,
+      AMOut: AMOut || false,
+      PMOut: PMOut || false,
     });
 
     return { message: 'Success' };
@@ -76,12 +84,18 @@ export class AttendanceService {
 
   async patchAttendance(
     attendanceId: string,
-    updateData: { AM?: boolean; PM?: boolean },
+    updateData: {
+      AM?: boolean;
+      PM?: boolean;
+      AMOut?: boolean;
+      PMOut?: boolean;
+    },
   ) {
     const update: any = {};
     if (updateData.AM !== undefined) update.AM = updateData.AM;
     if (updateData.PM !== undefined) update.PM = updateData.PM;
-
+    if (updateData.AMOut !== undefined) update.AMOut = updateData.AMOut;
+    if (updateData.PMOut !== undefined) update.PMOut = updateData.PMOut;
     const updatedRecord = await this.attendanceModel.findByIdAndUpdate(
       attendanceId,
       { $set: update },
