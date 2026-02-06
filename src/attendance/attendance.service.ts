@@ -19,6 +19,33 @@ export class AttendanceService {
     private studentService: StudentService,
   ) {}
 
+  async getAttendanceByEvent(eventId: string) {
+    const event = await this.eventModel.findById(eventId).exec();
+
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    const attendanceRecords = await this.attendanceModel
+      .find({ event: event._id as any })
+      .populate('student')
+      .populate('event')
+      .exec();
+
+    return attendanceRecords.map((record) => ({
+      student: {
+        firstName: record.student.firstName,
+        lastName: record.student.lastName,
+        studentId: record.student.studentId,
+        CSY: record.student.CSY,
+      },
+      AM: record.AM,
+      PM: record.PM,
+      AMOut: record.AMOut,
+      PMOut: record.PMOut,
+    }));
+  }
+
   async postAttendance(data: any, eventId: string) {
     const { firstName, lastName, CSY, studentId, gbox, AM, PM, AMOut, PMOut } =
       data;
