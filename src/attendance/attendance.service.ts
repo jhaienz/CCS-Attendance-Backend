@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -19,8 +20,12 @@ export class AttendanceService {
     private studentService: StudentService,
   ) {}
 
-  async getAttendanceByEvent(eventId: string, CSY: string) {
-    return this.attendanceModel.aggregate([
+  async getAttendanceByEvent(eventId: string, CSY?: string, year?: string) {
+    if (year && !['1', '2', '3', '4'].includes(year)) {
+      throw new BadRequestException('year must be 1, 2, 3, or 4');
+    }
+
+    const pipeline: any[] = [
       {
         // 1. Find attendance for this event
         $match: { event: new Types.ObjectId(eventId) },
@@ -28,17 +33,13 @@ export class AttendanceService {
       {
         // 2. Join with Students collection
         $lookup: {
-          from: 'Student', // Make sure this matches your actual collection name
+          from: 'students',
           localField: 'student',
           foreignField: '_id',
           as: 'studentInfo',
         },
       },
       { $unwind: '$studentInfo' },
-      {
-        // 3. Filter by the CSY (e.g., 'BSIT 2A')
-        $match: { 'studentInfo.CSY': CSY },
-      },
       {
         // 4. Shape the output
         $project: {
@@ -55,7 +56,23 @@ export class AttendanceService {
           PMOut: 1,
         },
       },
-    ]);
+    ];
+
+    if (CSY) {
+      pipeline.splice(3, 0, {
+        // 3. Filter by the CSY (e.g., 'BSIT 2A')
+        $match: { 'studentInfo.CSY': CSY },
+      });
+    }
+
+    if (year) {
+      pipeline.splice(3, 0, {
+        // 3. Filter by year level in CSY (e.g., 'BSIT 2A' -> year 2)
+        $match: { 'studentInfo.CSY': new RegExp(`\\b${year}\\b`) },
+      });
+    }
+
+    return this.attendanceModel.aggregate(pipeline);
   }
 
   async postAttendance(data: any, eventId: string) {

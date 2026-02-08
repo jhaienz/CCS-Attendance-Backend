@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Param, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 // import { CreateAttendanceDto } from './dto/create-attendance.dto';
@@ -17,8 +25,9 @@ export class AttendanceController {
   @Get(':eventId')
   async getAttendanceByEvent(
     @Param('eventId') eventId: any,
-    @Param('CSY') CSY: any,
+    @Query('CSY') CSY?: string,
+    @Query('year') year?: string,
   ) {
-    return this.attendanceService.getAttendanceByEvent(eventId, CSY);
+    return this.attendanceService.getAttendanceByEvent(eventId, CSY, year);
   }
 }
