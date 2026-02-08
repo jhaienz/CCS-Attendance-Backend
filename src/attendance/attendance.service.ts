@@ -19,31 +19,43 @@ export class AttendanceService {
     private studentService: StudentService,
   ) {}
 
-  async getAttendanceByEvent(eventId: string) {
-    const event = await this.eventModel.findById(eventId).exec();
-
-    if (!event) {
-      throw new NotFoundException(`Event with ID ${eventId} not found`);
-    }
-
-    const attendanceRecords = await this.attendanceModel
-      .find({ event: event._id as any })
-      .populate('student')
-      .populate('event')
-      .exec();
-
-    return attendanceRecords.map((record) => ({
-      student: {
-        firstName: record.student.firstName,
-        lastName: record.student.lastName,
-        studentId: record.student.studentId,
-        CSY: record.student.CSY,
+  async getAttendanceByEvent(eventId: string, CSY: string) {
+    return this.attendanceModel.aggregate([
+      {
+        // 1. Find attendance for this event
+        $match: { event: new Types.ObjectId(eventId) },
       },
-      AM: record.AM,
-      PM: record.PM,
-      AMOut: record.AMOut,
-      PMOut: record.PMOut,
-    }));
+      {
+        // 2. Join with Students collection
+        $lookup: {
+          from: 'Student', // Make sure this matches your actual collection name
+          localField: 'student',
+          foreignField: '_id',
+          as: 'studentInfo',
+        },
+      },
+      { $unwind: '$studentInfo' },
+      {
+        // 3. Filter by the CSY (e.g., 'BSIT 2A')
+        $match: { 'studentInfo.CSY': CSY },
+      },
+      {
+        // 4. Shape the output
+        $project: {
+          _id: 0,
+          student: {
+            firstName: '$studentInfo.firstName',
+            lastName: '$studentInfo.lastName',
+            studentId: '$studentInfo.studentId',
+            CSY: '$studentInfo.CSY',
+          },
+          AM: 1,
+          PM: 1,
+          AMOut: 1,
+          PMOut: 1,
+        },
+      },
+    ]);
   }
 
   async postAttendance(data: any, eventId: string) {

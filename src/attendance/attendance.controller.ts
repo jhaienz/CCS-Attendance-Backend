@@ -15,7 +15,10 @@ export class AttendanceController {
   }
 
   @Get(':eventId')
-  async getAttendanceByEvent(@Param('eventId') eventId: any) {
-    return this.attendanceService.getAttendanceByEvent(eventId);
+  async getAttendanceByEvent(
+    @Param('eventId') eventId: any,
+    @Param('CSY') CSY: any,
+  ) {
+    return this.attendanceService.getAttendanceByEvent(eventId, CSY);
   }
 }
